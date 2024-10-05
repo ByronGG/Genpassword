@@ -5,11 +5,11 @@ from datetime import datetime
 
 # Cargar o generar la clave de cifrado
 try:
-    with open('key.key', 'rb') as file:
+    with open('password_to_passtxt.key', 'rb') as file:
         key = file.read()
 except FileNotFoundError:
     key = Fernet.generate_key()
-    with open('key.key', 'wb') as file:
+    with open('password_to_passtxt.key', 'wb') as file:
         file.write(key)
 
 cipher_suite = Fernet(key)
