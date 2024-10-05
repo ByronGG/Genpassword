@@ -1,5 +1,7 @@
 import random
 import string
+import tkinter as tk
+from tkinter import messagebox, simpledialog
 from cryptography.fernet import Fernet
 from datetime import datetime
 
@@ -15,68 +17,83 @@ except FileNotFoundError:
 cipher_suite = Fernet(key)
 
 def password_gen(length=12):
-    #Genera una contraseña aleatoria con la longitud especificada.
+    """Genera una contraseña aleatoria con la longitud especificada."""
     characters = string.ascii_letters + string.digits + string.punctuation
     password = ''.join(random.choice(characters) for _ in range(length))
     return password
 
-def check_access():
-    #Verifica si la contraseña ingresada es correcta para acceder al archivo.
+def check_access(root):
+    """Verifica si la contraseña ingresada es correcta para acceder al archivo."""
     access_password = "mypassword"  # Cambia esta a tu contraseña
-    entered_password = input('Enter the password to view pass.txt: ')
+    entered_password = simpledialog.askstring("Access Password", "Enter the password to view pass.txt:", parent=root)
     return access_password == entered_password
 
-def view_password_file():
-    #Lee, descifra y muestra el contenido de pass.txt, si existe.
+def view_password_file(root):
+    """Lee, descifra y muestra el contenido de pass.txt, si existe."""
     try:
         with open('pass.txt', 'r') as file:
             content = file.readlines()
             if content:
-                print("\nPasswords stored in pass.txt:\n")
+                result = ""
                 for line in content:
                     # Extraer la información de cada línea
                     timestamp, description, encrypted_password = line.strip().split(' - ')
                     # Descifrar la contraseña
                     decrypted_password = cipher_suite.decrypt(encrypted_password.encode()).decode()
-                    print(f"{timestamp} - {description} - {decrypted_password}")
+                    result += f"{timestamp} - {description} - {decrypted_password}\n"
+                messagebox.showinfo("Stored Passwords", result, parent=root)
             else:
-                print("\nNo passwords found in pass.txt.\n")
+                messagebox.showinfo("Stored Passwords", "No passwords found in pass.txt.", parent=root)
     except FileNotFoundError:
-        print("\nThe file pass.txt does not exist yet.\n")
+        messagebox.showwarning("File Not Found", "The file pass.txt does not exist yet.", parent=root)
 
-def save_password(description, password):
-    #Guarda la nueva contraseña generada junto con la descripción y la fecha (cifrada).
+def save_password(description, password, root):
+    """Guarda la nueva contraseña generada junto con la descripción y la fecha (cifrada)."""
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     encrypted_password = cipher_suite.encrypt(password.encode()).decode()  # Cifrar la contraseña
     with open('pass.txt', 'a') as file:
         file.write(f'{current_time} - {description} - {encrypted_password}\n')
-    print('Password saved in pass.txt')
+    messagebox.showinfo("Success", "Password saved in pass.txt", parent=root)
 
-# Bloque principal
-print('Welcome to the password generator')
+def generate_password(root):
+    """Genera una nueva contraseña y la guarda."""
+    long_length = simpledialog.askinteger("Password Length", "Enter the length of the password (min 8):", minvalue=8, parent=root)
+    if long_length:
+        new_password = password_gen(long_length)
+        description = simpledialog.askstring("Password Description", "Enter a description for this password:", parent=root)
+        save_password(description, new_password, root)
 
-# Verificar acceso solo para ver las contraseñas anteriores
-if check_access():
-    view_password_file()
-else:
-    print('Incorrect password')
+def main():
+    """Configura la ventana principal de la aplicación."""
+    root = tk.Tk()
+    root.title("Password Generator")
+    
+    # Establecer tamaño de la ventana
+    window_width = 400
+    window_height = 300
+    root.geometry(f"{window_width}x{window_height}")  # Ancho x Alto en píxeles
 
-# Bucle para solicitar una longitud válida
-while True:
-    try:
-        long_length = int(input('Enter the length of the password (min 8): '))
-        if long_length >= 8:
-            break
-        print('The password must be at least 8 characters long')
-    except ValueError:
-        print('Please enter a valid number')
+    # Calcular la posición para centrar la ventana
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x = (screen_width // 2) - (window_width // 2)
+    y = (screen_height // 2) - (window_height // 2)
 
-# Generar la nueva contraseña
-new_password = password_gen(long_length)
-print(f'Your new password is: {new_password}')
+    # Establecer la posición de la ventana
+    root.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
-# Solicitar una descripción para la contraseña
-description = input('Enter a description for this password: ')
+    # Botones
+    generate_button = tk.Button(root, text="Generate Password", command=lambda: generate_password(root))
+    generate_button.pack(pady=10)
 
-# Guardar la contraseña en el archivo (cifrada)
-save_password(description, new_password)
+    view_button = tk.Button(root, text="View Stored Passwords", command=lambda: check_access(root) and view_password_file(root))
+    view_button.pack(pady=10)
+
+    exit_button = tk.Button(root, text="Exit", command=root.quit)
+    exit_button.pack(pady=10)
+
+    root.mainloop()
+
+# Ejecutar la aplicación
+if __name__ == "__main__":
+    main()
