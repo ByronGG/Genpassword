@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import messagebox, simpledialog
 from cryptography.fernet import Fernet
 from datetime import datetime
+import pyperclip
 
 # Cargar o generar la clave de cifrado
 try:
@@ -28,6 +29,11 @@ def check_access(root):
     entered_password = simpledialog.askstring("Access Password", "Enter the password to view pass.txt:", parent=root)
     return access_password == entered_password
 
+def copy_to_clipboard(password):
+    """Copia la contraseña seleccionada al portapapeles."""
+    pyperclip.copy(password)
+    messagebox.showinfo("Copied", "Password copied to clipboard!")
+
 def view_password_file(root):
     """Lee, descifra y muestra el contenido de pass.txt, si existe."""
     try:
@@ -41,7 +47,31 @@ def view_password_file(root):
                     # Descifrar la contraseña
                     decrypted_password = cipher_suite.decrypt(encrypted_password.encode()).decode()
                     result += f"{timestamp} - {description} - {decrypted_password}\n"
-                messagebox.showinfo("Stored Passwords", result, parent=root)
+                
+                # Mostrar las contraseñas en un nuevo cuadro de diálogo
+                copy_window = tk.Toplevel(root)
+                copy_window.title("Stored Passwords")
+                copy_window.geometry("400x300")
+
+                # Mostrar las contraseñas en un cuadro de texto
+                text_box = tk.Text(copy_window, wrap='word')
+                text_box.insert(tk.END, result)
+                text_box.config(state=tk.DISABLED)  # Hacer que el texto sea solo lectura
+                text_box.pack(padx=10, pady=10, expand=True, fill=tk.BOTH)
+
+                # Crear un botón para copiar la contraseña seleccionada
+                def copy_selected():
+                    try:
+                        # Obtener la contraseña seleccionada (en la línea activa)
+                        selected_index = text_box.index(tk.INSERT).split('.')[0]  # Línea activa
+                        selected_line = text_box.get(f"{selected_index}.0", f"{selected_index}.end")
+                        copy_to_clipboard(selected_line.strip())
+                    except Exception as e:
+                        messagebox.showwarning("Warning", "Please select a password to copy.", parent=copy_window)
+
+                copy_button = tk.Button(copy_window, text="Copy Selected Password", command=copy_selected)
+                copy_button.pack(pady=5)
+
             else:
                 messagebox.showinfo("Stored Passwords", "No passwords found in pass.txt.", parent=root)
     except FileNotFoundError:
@@ -70,7 +100,7 @@ def main():
     
     # Establecer tamaño de la ventana
     window_width = 400
-    window_height = 300
+    window_height = 200
     root.geometry(f"{window_width}x{window_height}")  # Ancho x Alto en píxeles
 
     # Calcular la posición para centrar la ventana
@@ -81,6 +111,11 @@ def main():
 
     # Establecer la posición de la ventana
     root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+    # Cambiar color de fondo y fuente
+    root.configure(bg="#f0f0f0")  # Color de fondo suave
+    title_label = tk.Label(root, text="Password Generator", font=("Arial", 18), bg="#f0f0f0")
+    title_label.pack(pady=10)
 
     # Botones
     generate_button = tk.Button(root, text="Generate Password", command=lambda: generate_password(root))
