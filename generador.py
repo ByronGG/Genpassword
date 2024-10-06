@@ -43,16 +43,25 @@ def view_password_file(root):
                 # Crear una nueva ventana
                 copy_window = tk.Toplevel(root)
                 copy_window.title("Stored Passwords")
-                copy_window.geometry("500x300")
+                copy_window.geometry("600x600")  # Ajustar tamaño de la ventana
+                copy_window.configure(bg="#f8f9fa")  # Color de fondo de la ventana
 
                 # Crear un Treeview para mostrar contraseñas en formato de tabla
-                tree = ttk.Treeview(copy_window, columns=("Timestamp", "Description", "Password"), show='headings')
+                style = ttk.Style()
+                style.configure("Treeview", background="#ffffff", foreground="black", rowheight=25, fieldbackground="#ffffff")
+                style.configure("Treeview.Heading", background="#007bff", foreground="white", font=("Arial", 12, "bold"))
+                style.map("Treeview.Heading", background=[('active', '#0056b3')])
+
+                # Estilo adicional para que los encabezados sean más visibles
+                style.configure("Treeview.Heading", foreground="black")  # Texto en negro para mayor visibilidad
+
+                tree = ttk.Treeview(copy_window, columns=("Timestamp", "Description", "Password"), show='headings', height=15)
                 tree.heading("Timestamp", text="Timestamp")
                 tree.heading("Description", text="Description")
                 tree.heading("Password", text="Password")
                 tree.column("Timestamp", anchor="center", width=150)
-                tree.column("Description", anchor="center", width=150)
-                tree.column("Password", anchor="center", width=150)
+                tree.column("Description", anchor="center", width=200)
+                tree.column("Password", anchor="center", width=200)
 
                 # Insertar las contraseñas en el Treeview
                 for line in content:
@@ -60,10 +69,19 @@ def view_password_file(root):
                     decrypted_password = cipher_suite.decrypt(encrypted_password.encode()).decode()
                     tree.insert("", tk.END, values=(timestamp, description, decrypted_password))
 
-                tree.pack(expand=True, fill=tk.BOTH, padx=10, pady=(10, 0))  # Padding adicional en la parte superior
+                # Crear un marco para la tabla
+                frame = tk.Frame(copy_window)
+                frame.pack(expand=True, fill=tk.BOTH, padx=10, pady=(0, 10))  # Eliminado el padding en la parte superior
 
-                # Crear un botón para copiar la contraseña seleccionada
-                def copy_selected():
+                # Añadir el Treeview a la ventana sin scrollbar
+                tree.pack(expand=True, fill=tk.BOTH)
+
+                # Botón "Copy Password" debajo de la tabla
+                copy_button = tk.Button(copy_window, text="Copy Password", command=lambda: copy_selected(tree), bg="#28a745", fg="white", font=("Arial", 10, "bold"))
+                copy_button.pack(pady=10, fill=tk.X, padx=10)  # Colocar el botón debajo de la tabla
+
+                # Función para copiar la contraseña seleccionada
+                def copy_selected(tree):
                     try:
                         selected_item = tree.selection()[0]  # Obtener el elemento seleccionado
                         selected_password = tree.item(selected_item)["values"][2]  # Obtener la contraseña
@@ -71,30 +89,13 @@ def view_password_file(root):
                     except IndexError:
                         messagebox.showwarning("Warning", "Please select a password to copy.", parent=copy_window)
 
-                # Mover el botón abajo de la tabla
-                copy_button = tk.Button(copy_window, text="Copy Password", command=copy_selected)
-                copy_button.pack(pady=10)  # Espaciado adicional
-
-                # Hacer la ventana responsiva
-                copy_window.grid_rowconfigure(0, weight=1)
-                copy_window.grid_columnconfigure(0, weight=1)
-
-                # Añadir scrollbars
-                scrollbar = ttk.Scrollbar(copy_window, orient="vertical", command=tree.yview)
-                tree.configure(yscroll=scrollbar.set)
-                scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-                tree.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
-
-                # Pack el botón después de la tabla
-                copy_button.pack(pady=10)  # Colocar el botón debajo de la tabla
-
             else:
                 messagebox.showinfo("Stored Passwords", "No passwords found in pass.txt.", parent=root)
     except FileNotFoundError:
         messagebox.showwarning("File Not Found", "The file pass.txt does not exist yet.", parent=root)
 
 def save_password(description, password, root):
-    # Guarda la nueva contraseña generada junto con la descripción y la fecha (cifrada).
+    """Guarda la nueva contraseña generada junto con la descripción y la fecha (cifrada)."""
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     encrypted_password = cipher_suite.encrypt(password.encode()).decode()  # Cifrar la contraseña
     with open('pass.txt', 'a') as file:
@@ -102,7 +103,7 @@ def save_password(description, password, root):
     messagebox.showinfo("Success", "Password saved in pass.txt", parent=root)
 
 def generate_password(root):
-    # Genera una nueva contraseña y la guarda.
+    """Genera una nueva contraseña y la guarda."""
     long_length = simpledialog.askinteger("Password Length", "Enter the length of the password (min 8):", minvalue=8, parent=root)
     if long_length:
         new_password = password_gen(long_length)
@@ -110,7 +111,7 @@ def generate_password(root):
         save_password(description, new_password, root)
 
 def main():
-    # Configura la ventana principal de la aplicación.
+    """Configura la ventana principal de la aplicación."""
     root = tk.Tk()
     root.title("Password Generator")
     
@@ -134,13 +135,13 @@ def main():
     title_label.pack(pady=10)
 
     # Botones
-    generate_button = tk.Button(root, text="Generate Password", command=lambda: generate_password(root))
+    generate_button = tk.Button(root, text="Generate Password", command=lambda: generate_password(root), bg="#28a745", fg="white", font=("Arial", 10))
     generate_button.pack(pady=10)
 
-    view_button = tk.Button(root, text="View Stored Passwords", command=lambda: check_access(root) and view_password_file(root))
+    view_button = tk.Button(root, text="View Stored Passwords", command=lambda: check_access(root) and view_password_file(root), bg="#007bff", fg="white", font=("Arial", 10))
     view_button.pack(pady=10)
 
-    exit_button = tk.Button(root, text="Exit", command=root.quit)
+    exit_button = tk.Button(root, text="Exit", command=root.quit, bg="#dc3545", fg="white", font=("Arial", 10))
     exit_button.pack(pady=10)
 
     root.mainloop()
