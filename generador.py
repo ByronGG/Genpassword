@@ -113,8 +113,8 @@ def main():
     root.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
     # Cambiar color de fondo y fuente
-    root.configure(bg="#f0f0f0")  # Color de fondo suave
-    title_label = tk.Label(root, text="Password Generator", font=("Arial", 18), bg="#f0f0f0")
+    root.configure(bg="#d1c8bc")  # Color de fondo suave
+    title_label = tk.Label(root, text="Password Generator", font=("Arial", 18), bg="#d1c8bc")
     title_label.pack(pady=10)
 
     # Botones
