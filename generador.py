@@ -55,7 +55,16 @@ def view_password_file(root):
                 # Estilo adicional para que los encabezados sean más visibles
                 style.configure("Treeview.Heading", foreground="black")  # Texto en negro para mayor visibilidad
 
-                tree = ttk.Treeview(copy_window, columns=("Timestamp", "Description", "Password"), show='headings', height=15)
+                # Crear un marco para la tabla
+                frame = tk.Frame(copy_window)
+                frame.pack(expand=True, fill=tk.BOTH, padx=10, pady=(0, 10))  # Mantener padding solo en la parte inferior
+
+                # Añadir saludo sobre la tabla
+                greeting_label = tk.Label(frame, text="Contraseñas Guardadas. Selecciona una para copiar", font=("Arial", 14), bg="#f8f9fa")
+                greeting_label.pack(pady=(10, 0))  # Margen superior para separar del borde
+
+                # Crear el Treeview
+                tree = ttk.Treeview(frame, columns=("Timestamp", "Description", "Password"), show='headings', height=15)
                 tree.heading("Timestamp", text="Timestamp")
                 tree.heading("Description", text="Description")
                 tree.heading("Password", text="Password")
@@ -69,12 +78,8 @@ def view_password_file(root):
                     decrypted_password = cipher_suite.decrypt(encrypted_password.encode()).decode()
                     tree.insert("", tk.END, values=(timestamp, description, decrypted_password))
 
-                # Crear un marco para la tabla
-                frame = tk.Frame(copy_window)
-                frame.pack(expand=True, fill=tk.BOTH, padx=10, pady=(0, 10))  # Eliminado el padding en la parte superior
-
-                # Añadir el Treeview a la ventana sin scrollbar
-                tree.pack(expand=True, fill=tk.BOTH)
+                # Añadir el Treeview a la ventana
+                tree.pack(expand=True, fill=tk.BOTH, padx=0, pady=0)  # Asegurarse de que no haya padding
 
                 # Botón "Copy Password" debajo de la tabla
                 copy_button = tk.Button(copy_window, text="Copy Password", command=lambda: copy_selected(tree), bg="#28a745", fg="white", font=("Arial", 10, "bold"))
